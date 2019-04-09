@@ -93,6 +93,8 @@ static_library("owt_sdk_base") {
     "sdk/base/stringutils.h",
     "sdk/base/sysinfo.cc",
     "sdk/base/sysinfo.h",
+    "sdk/base/webrtcaudioplayerimpl.cc",
+    "sdk/base/webrtcaudioplayerimpl.h",
     "sdk/base/webrtcvideorendererimpl.cc",
     "sdk/base/webrtcvideorendererimpl.h",
     "sdk/include/cpp/owt/base/clientconfiguration.h",

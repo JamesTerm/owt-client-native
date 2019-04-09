@@ -16,6 +16,7 @@
 #endif
 #include "talk/owt/sdk/base/peerconnectiondependencyfactory.h"
 #include "talk/owt/sdk/base/webrtcvideorendererimpl.h"
+#include "talk/owt/sdk/base/webrtcaudioplayerimpl.h"
 #if defined(WEBRTC_WIN)
 #include "talk/owt/sdk/base/win/videorendererwin.h"
 #endif
@@ -28,6 +29,7 @@ namespace base {
 #if defined(WEBRTC_WIN)
 Stream::Stream()
     : media_stream_(nullptr),
+      player_impl_(nullptr),
       renderer_impl_(nullptr),
       d3d9_renderer_impl_(nullptr),
       source_(AudioSourceInfo::kUnknown, VideoSourceInfo::kUnknown),
@@ -35,6 +37,7 @@ Stream::Stream()
       id_("") {}
 Stream::Stream(const std::string& id)
     : media_stream_(nullptr),
+      player_impl_(nullptr),
       renderer_impl_(nullptr),
       d3d9_renderer_impl_(nullptr),
       source_(AudioSourceInfo::kUnknown, VideoSourceInfo::kUnknown),
@@ -43,6 +46,7 @@ Stream::Stream(const std::string& id)
 #else
 Stream::Stream()
     : media_stream_(nullptr),
+      player_impl_(nullptr),
       renderer_impl_(nullptr),
       ended_(false),
       id_("") {}
@@ -52,6 +56,7 @@ Stream::Stream(MediaStreamInterface* media_stream, StreamSourceInfo source)
 }
 Stream::Stream(const std::string& id)
     : media_stream_(nullptr),
+      player_impl_(nullptr),
       renderer_impl_(nullptr),
       ended_(false),
       id_(id) {}
@@ -109,6 +114,47 @@ void Stream::SetAudioTracksEnabled(bool enabled) {
     (*it)->set_enabled(enabled);
   }
 }
+void Stream::AttachAudioPlayer(AudioPlayerInterface& player)
+{
+  if (media_stream_ == nullptr) 
+  {
+    RTC_LOG(LS_ERROR) << "Cannot attach an video only stream to a player.";
+    return;
+  }
+  auto audio_tracks = media_stream_->GetAudioTracks();
+  if (audio_tracks.size() == 0) 
+  {
+    RTC_LOG(LS_ERROR) << "Attach failed because of no audio tracks.";
+    return;
+  } 
+  else if (audio_tracks.size() > 1) 
+  {
+    RTC_LOG(LS_WARNING) << "There are more than one audio tracks, the first one "
+                       "will be attachecd to renderer.";
+  }
+  WebrtcAudioPlayerImpl* old_renderer = player_impl_ ? player_impl_ : nullptr;
+  player_impl_ = new WebrtcAudioPlayerImpl(player);
+  audio_tracks[0]->AddSink(player_impl_);
+  if (old_renderer)
+    delete old_renderer;
+  RTC_LOG(LS_INFO) << "Attached the stream to a player.";
+}
+
+void Stream::DetachAudioPlayer() 
+{
+  if (media_stream_ == nullptr || renderer_impl_ == nullptr)
+    return;
+  auto audio_tracks = media_stream_->GetAudioTracks();
+  if(audio_tracks.size() == 0)
+    return;
+  // Detach from the first stream.
+  if (player_impl_ != nullptr) {
+    audio_tracks[0]->RemoveSink(player_impl_);
+    delete player_impl_;
+    player_impl_ = nullptr;
+  }
+}
+
 void Stream::AttachVideoRenderer(VideoRendererInterface& renderer){
   if (media_stream_ == nullptr) {
     RTC_LOG(LS_ERROR) << "Cannot attach an audio only stream to a renderer.";
