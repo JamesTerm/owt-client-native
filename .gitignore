@@ -7,3 +7,6 @@
 /third_party
 /tools
 /dist
+*.ipch
+*.bin
+
