@@ -45,6 +45,10 @@ class StreamObserver {
   virtual void OnEnded() {};
   /// Triggered when the stream info is updated in conference mode.
   virtual void OnUpdated() {};
+  /// Triggered when the stream is muted
+  virtual void OnMute(TrackKind track_kind) {};
+  /// Triggered when the stream is unmuted
+  virtual void OnUnmute(TrackKind track_kind) {};
 };
 class WebrtcAudioPlayerImpl;
 class WebrtcVideoRendererImpl;
@@ -114,6 +118,8 @@ class Stream {
   void MediaStream(MediaStreamInterface* media_stream);
   void TriggerOnStreamEnded();
   void TriggerOnStreamUpdated();
+  void TriggerOnStreamMute(owt::base::TrackKind track_kind);
+  void TriggerOnStreamUnmute(owt::base::TrackKind track_kind);
   MediaStreamInterface* media_stream_;
   std::unordered_map<std::string, std::string> attributes_;
   WebrtcAudioPlayerImpl* player_impl_;

@@ -140,6 +140,20 @@ void ConferenceInfo::TriggerOnStreamUpdated(const std::string& stream_id) {
     }
   }
 }
+void ConferenceInfo::TriggerOnStreamMuteOrUnmute(const std::string& stream_id, 
+          owt::base::TrackKind track_kind, bool muted) {
+  for (auto& it : remote_streams_) {
+    if (it->Id() == stream_id) {
+      if (muted) {
+        it->TriggerOnStreamMute(track_kind);
+      }
+      else {
+        it->TriggerOnStreamUnmute(track_kind);
+      }      
+      break;
+    }
+  }
+}
 enum ConferenceClient::StreamType : int {
   kStreamTypeCamera = 1,
   kStreamTypeScreen,
@@ -282,27 +296,9 @@ void ConferenceClient::Join(
           RTC_LOG(LS_WARNING) << "Room info doesn't contain valid users.";
         } else {
           auto users = room_info->get_map()["participants"]->get_vector();
-          // Get current user's ID and trigger |on_success|. Make sure
-          // |on_success| is triggered before any other events because
+          // Make sure |on_success| is triggered before any other events because
           // OnUserJoined and OnStreamAdded should be triggered after join a
           // conference.
-          for (auto user_it = users.begin(); user_it != users.end();
-               user_it++) {
-            Participant* user_raw;
-            if (ParseUser(*user_it, &user_raw)) {
-              std::shared_ptr<Participant> user(user_raw);
-              const std::lock_guard<std::mutex> lock(conference_info_mutex_);
-              current_conference_info_->participants_.push_back(user);
-            } else if (on_failure) {
-              event_queue_->PostTask([on_failure]() {
-                std::unique_ptr<Exception> e(
-                    new Exception(ExceptionType::kConferenceUnknown,
-                                  "Failed to parse current user's info"));
-                on_failure(std::move(e));
-              });
-            }
-            break;
-          }
           for (auto it = users.begin(); it != users.end(); ++it) {
             TriggerOnUserJoined(*it, true);
           }
@@ -1417,21 +1413,13 @@ void ConferenceClient::TriggerOnStreamRemoved(sio::message::ptr stream_info) {
 void ConferenceClient::TriggerOnStreamError(
     std::shared_ptr<Stream> stream,
     std::shared_ptr<const Exception> exception) {
-// TODO: in 4.0 API this event is not supported.
-#if 0
-  for (auto observers_it = observers_.begin(); observers_it != observers_.end();
-       ++observers_it) {
-    auto& o = (*observers_it).get();
-    auto type = exception->Type();
-    auto message = exception->Message();
-    event_queue_->PostTask([&o, stream, type, message] {
-      std::unique_ptr<Exception> e(
-          new Exception(type, message));
-      o.OnStreamError(stream, std::move(e));
-    });
+  const std::lock_guard<std::mutex> lock(stream_update_observer_mutex_);
+  for (auto its = stream_update_observers_.begin();
+       its != stream_update_observers_.end(); ++its) {
+    (*its).get().OnStreamError(exception->Message());
   }
-#endif
 }
+
 void ConferenceClient::TriggerOnStreamUpdated(sio::message::ptr stream_info) {
   if (!(stream_info && stream_info->get_flag() == sio::message::flag_object &&
         stream_info->get_map()["id"] && stream_info->get_map()["event"] &&
@@ -1484,6 +1472,7 @@ void ConferenceClient::TriggerOnStreamUpdated(sio::message::ptr stream_info) {
          its != stream_update_observers_.end(); ++its) {
       (*its).get().OnStreamMuteOrUnmute(id, track_kind, muted);
     }
+    current_conference_info_->TriggerOnStreamMuteOrUnmute(id, track_kind, muted);
   } else if (event_field == ".") {
     // The value field contains an update to stream info
     auto value = event->get_map()["value"];
