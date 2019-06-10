@@ -61,6 +61,7 @@ void P2PClient::AddAllowedRemoteId(const std::string& target_id) {
     return;
   }
   const std::lock_guard<std::mutex> lock(remote_ids_mutex_);
+  RTC_LOG(LS_INFO) << "Adding remote id." << target_id;
   allowed_remote_ids_.push_back(target_id);
 }
 void P2PClient::RemoveAllowedRemoteId(const std::string& target_id,
@@ -80,6 +81,7 @@ void P2PClient::RemoveAllowedRemoteId(const std::string& target_id,
   }
   {
     const std::lock_guard<std::mutex> lock(remote_ids_mutex_);
+    RTC_LOG(LS_INFO) << "Removing remote id." << target_id;
     allowed_remote_ids_.erase(
         std::remove(allowed_remote_ids_.begin(), allowed_remote_ids_.end(), target_id),
         allowed_remote_ids_.end());
