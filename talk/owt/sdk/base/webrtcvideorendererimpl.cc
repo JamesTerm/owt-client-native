@@ -17,29 +17,40 @@
 #include "webrtc/media/base/videocommon.h"
 namespace owt {
 namespace base {
-void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame) {
-  if (frame.video_frame_buffer()->type() ==
-          webrtc::VideoFrameBuffer::Type::kNative) {
+void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame) 
+{
+  if (frame.video_frame_buffer()->type() == webrtc::VideoFrameBuffer::Type::kNative) 
+  {
+    //Note: we should make a render_type check, but since this is hard configured
+    //It is not necessary
+    using namespace webrtc;
+    const rtc::scoped_refptr<VideoFrameBuffer> video_frame_buffer=frame.video_frame_buffer();
+    const INativeBufferInterface* frame_info=video_frame_buffer->GetINative();
+    //Note we must address the compressed frame size directly
+    const size_t frame_size=frame_info->size();
+    uint8_t* buffer = new uint8_t[frame_size];
+    Resolution resolution(frame.width(), frame.height());
+    memcpy(buffer,frame_info->Data(),frame_size);
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kI420});
+    renderer_.RenderFrame(std::move(video_buffer));
     return;
   }
   VideoRendererType renderer_type = renderer_.Type();
-  if (renderer_type != VideoRendererType::kI420 &&
-      renderer_type != VideoRendererType::kARGB)
+  if (renderer_type != VideoRendererType::kI420 && renderer_type != VideoRendererType::kARGB)
     return;
   Resolution resolution(frame.width(), frame.height());
-  if (renderer_type == VideoRendererType::kARGB) {
+  if (renderer_type == VideoRendererType::kARGB) 
+  {
     uint8_t* buffer = new uint8_t[resolution.width * resolution.height * 4];
-    webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0,
-                            static_cast<uint8_t*>(buffer));
-    std::unique_ptr<VideoBuffer> video_buffer(
-        new VideoBuffer{buffer, resolution, VideoBufferType::kARGB});
+    webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0, static_cast<uint8_t*>(buffer));
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kARGB});
     renderer_.RenderFrame(std::move(video_buffer));
-  } else {
+  } 
+  else 
+  {
     uint8_t* buffer = new uint8_t[resolution.width * resolution.height * 3 / 2];
-    webrtc::ConvertFromI420(frame, webrtc::VideoType::kI420, 0,
-                            static_cast<uint8_t*>(buffer));
-    std::unique_ptr<VideoBuffer> video_buffer(
-        new VideoBuffer{buffer, resolution, VideoBufferType::kI420});
+    webrtc::ConvertFromI420(frame, webrtc::VideoType::kI420, 0,static_cast<uint8_t*>(buffer));
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kI420});
     renderer_.RenderFrame(std::move(video_buffer));
   }
 }
