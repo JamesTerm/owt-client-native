@@ -16,10 +16,12 @@ namespace base {
 enum class VideoBufferType {
   kI420,
   kARGB,
+  kNative
 };
 enum class VideoRendererType {
   kI420,
   kARGB,
+  kNative
 };
 /// Video buffer and its information
 struct VideoBuffer {

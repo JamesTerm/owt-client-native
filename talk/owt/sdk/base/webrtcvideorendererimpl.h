@@ -16,8 +16,14 @@ class WebrtcVideoRendererImpl
       : renderer_(renderer) {}
   virtual void OnFrame(const webrtc::VideoFrame& frame) override;
   virtual ~WebrtcVideoRendererImpl() {}
+
+  void SetVideoOptionsCallback(std::function<const char*(int,const char**)> video_options_callback);
  private:
   VideoRendererInterface& renderer_;
+
+  void CheckOptions();
+  std::function<const char*(int,const char**)> video_options_callback_=nullptr;  //provide callback to set video options
+  bool want_h264_frames_=false;  //cache last state of this option
 };
 }
 }
