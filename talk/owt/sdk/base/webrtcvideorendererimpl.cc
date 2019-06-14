@@ -46,8 +46,10 @@ void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame)
     uint8_t* buffer = new uint8_t[frame_size];
     Resolution resolution(frame.width(), frame.height());
     memcpy(buffer,frame_info->Data(),frame_size);
-    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kNative});
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kNative,
+      frame.timestamp_us(),frame.timestamp()});
     renderer_.RenderFrame(std::move(video_buffer));
+    //printf("pts->%.3f dts->%.3f \n",(double)frame.timestamp_us()/1000000.0,frame.timestamp()/1000.0);
     return;
   }
   if (renderer_type != VideoRendererType::kI420 && renderer_type != VideoRendererType::kARGB)
@@ -57,14 +59,16 @@ void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame)
   {
     uint8_t* buffer = new uint8_t[resolution.width * resolution.height * 4];
     webrtc::ConvertFromI420(frame, webrtc::VideoType::kARGB, 0, static_cast<uint8_t*>(buffer));
-    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kARGB});
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kARGB,
+        frame.timestamp_us(),frame.timestamp()});
     renderer_.RenderFrame(std::move(video_buffer));
   } 
   else 
   {
     uint8_t* buffer = new uint8_t[resolution.width * resolution.height * 3 / 2];
     webrtc::ConvertFromI420(frame, webrtc::VideoType::kI420, 0,static_cast<uint8_t*>(buffer));
-    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kI420});
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kI420,
+        frame.timestamp_us(),frame.timestamp()});
     renderer_.RenderFrame(std::move(video_buffer));
   }
 }

@@ -26,11 +26,14 @@ enum class VideoRendererType {
 /// Video buffer and its information
 struct VideoBuffer {
   /// Video buffer
-  uint8_t* buffer;
+  const uint8_t* buffer;
   /// Resolution for the Video buffer
   Resolution resolution;
   // Buffer type
   VideoBufferType type;
+  //Timestamps 
+  uint64_t rendering_timestamp_us; //presentation time stamp (microseconds)
+  int32_t received_timestamp_ms;   //display time stamp (milliseconds)
   ~VideoBuffer() { delete[] buffer; }
 };
 /// VideoRenderWindow wraps a native Window handle
