@@ -16,7 +16,8 @@ namespace base {
 enum class VideoBufferType {
   kI420,
   kARGB,
-  kNative
+  kNative_keyFrame,
+  kNative_deltaFrame
 };
 enum class VideoRendererType {
   kI420,

@@ -46,7 +46,8 @@ void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame)
     uint8_t* buffer = new uint8_t[frame_size];
     Resolution resolution(frame.width(), frame.height());
     memcpy(buffer,frame_info->Data(),frame_size);
-    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, VideoBufferType::kNative,
+    const VideoBufferType type_to_use=frame_info->get_frame_type()==FrameType::kVideoFrameDelta?VideoBufferType::kNative_deltaFrame:VideoBufferType::kNative_keyFrame;
+    std::unique_ptr<VideoBuffer> video_buffer(new VideoBuffer{buffer, resolution, type_to_use,
       frame.timestamp_us(),frame.timestamp()});
     renderer_.RenderFrame(std::move(video_buffer));
     //printf("pts->%.3f dts->%.3f \n",(double)frame.timestamp_us()/1000000.0,frame.timestamp()/1000.0);
