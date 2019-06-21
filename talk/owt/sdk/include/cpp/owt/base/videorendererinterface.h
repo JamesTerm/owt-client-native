@@ -35,6 +35,7 @@ struct VideoBuffer {
   //Timestamps 
   uint64_t rendering_timestamp_us; //presentation time stamp (microseconds)
   int32_t received_timestamp_ms;   //display time stamp (milliseconds)
+  size_t buffer_size;
   ~VideoBuffer() { delete[] buffer; }
 };
 /// VideoRenderWindow wraps a native Window handle
