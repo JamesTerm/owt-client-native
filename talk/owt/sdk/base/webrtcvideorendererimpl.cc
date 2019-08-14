@@ -15,6 +15,7 @@
 #endif
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
 #include "webrtc/media/base/videocommon.h"
+//#include "webrtc/rtc_base/logging.h"
 
 //TODO this is only for development, if we need to use it then we'll need to implement properly
 #define __JamesHack__
@@ -80,6 +81,7 @@ void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame)
     if (!video_options_callback_)
     {
       #ifdef __JamesHack__
+      //rtc::LogMessage::SetLogToStderr(false);  //temporary place to put this for ease of access
       if (webrtc::g_VideoReceiveStream_SetOptions)
       {
         SetVideoOptionsCallback(webrtc::g_VideoReceiveStream_SetOptions);
@@ -106,7 +108,7 @@ void WebrtcVideoRendererImpl::OnFrame(const webrtc::VideoFrame& frame)
       const char* args[] ={"get_want_h264_frames"};
       const char* result=video_options_callback_(1,args);
       want_h264_frames_=strcmp(result,"true")==0?true:false;
-      printf("* _want_h264_frames=%s",result);
+      //printf("* _want_h264_frames=%s",result);
     }
   }
 
