@@ -36,6 +36,7 @@ struct VideoBuffer {
   uint64_t rendering_timestamp_us; //presentation time stamp (microseconds)
   int32_t received_timestamp_ms;   //display time stamp (milliseconds)
   size_t buffer_size;
+  std::function<void(bool KeyFrame)> request_keyframe_callback;
   ~VideoBuffer() { delete[] buffer; }
 };
 /// VideoRenderWindow wraps a native Window handle
