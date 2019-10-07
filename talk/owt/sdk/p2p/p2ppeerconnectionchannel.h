@@ -91,6 +91,7 @@ class P2PPeerConnectionChannel : public P2PSignalingReceiverInterface,
   std::function<void()> GetLatestPublishSuccessCallback();
   std::function<void(std::unique_ptr<Exception>)> GetLatestPublishFailureCallback();
   bool IsAbandoned();
+  void SetOnMessageStopCallback(std::function<void()> callback);
  protected:
   void CreateOffer() override;
   void CreateAnswer() override;
@@ -219,6 +220,7 @@ class P2PPeerConnectionChannel : public P2PSignalingReceiverInterface,
   std::shared_ptr<LocalStream> latest_local_stream_;
   std::function<void()> latest_publish_success_callback_;
   std::function<void(std::unique_ptr<Exception>)> latest_publish_failure_callback_;
+  std::function <void()> on_message_stop_callback_;  //notify p2p client
   bool ua_sent_;
   bool stop_send_needed_;
   bool remote_side_offline_;

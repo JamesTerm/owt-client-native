@@ -304,6 +304,11 @@ std::shared_ptr<P2PPeerConnectionChannel> P2PClient::GetPeerConnectionChannel(
     auto pcc_pair =
         std::pair<std::string, std::shared_ptr<P2PPeerConnectionChannel>>(
             target_id, pcc);
+            pcc_pair.second->SetOnMessageStopCallback(
+              [&]{
+                //This callback is not used for p2p, seems to be a perfect fit for OnMessageStop  -James
+                OnServerDisconnected();
+              });
     pc_channels_.insert(pcc_pair);
     return pcc;
   } else {

@@ -102,6 +102,7 @@ P2PPeerConnectionChannel::P2PPeerConnectionChannel(
       ended_(false) {
   RTC_CHECK(signaling_sender_);
   InitializePeerConnection();
+  on_message_stop_callback_=nullptr;
 }
 P2PPeerConnectionChannel::P2PPeerConnectionChannel(
     PeerConnectionChannelConfiguration configuration,
@@ -381,6 +382,9 @@ void P2PPeerConnectionChannel::OnIncomingSignalingMessage(
     rtc::GetStringFromJsonObject(json_message, kMessageDataKey, &id);
     OnMessageDataReceived(id);
   } else if (message_type == kChatClosed) {
+    //issue message to client code (if hook has been established)
+    if (on_message_stop_callback_)
+      on_message_stop_callback_();
     OnMessageStop();
   } else {
     RTC_LOG(LS_WARNING) << "Received unknown message type : " << message_type;
@@ -1006,6 +1010,11 @@ P2PPeerConnectionChannel::GetLatestPublishFailureCallback() {
 bool P2PPeerConnectionChannel::IsAbandoned() {
   return remote_side_offline_;
 }
+void P2PPeerConnectionChannel::SetOnMessageStopCallback(std::function<void()> callback)
+{
+  on_message_stop_callback_=callback;
+}
+
 void P2PPeerConnectionChannel::DrainPendingStreams() {
   RTC_LOG(LS_INFO) << "Draining pending stream";
   ChangeSessionState(kSessionStateConnecting);
