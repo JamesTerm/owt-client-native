@@ -190,6 +190,7 @@ class P2PClient final
   /** @cond */
   void SetLocalId(const std::string& local_id);
   /** @endcond */
+  const char *GetLocalId() const;
  protected:
   // Implement P2PSignalingSenderInterface
   virtual void SendSignalingMessage(const std::string& message,

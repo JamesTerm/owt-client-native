@@ -181,6 +181,10 @@ void P2PClient::GetConnectionStats(
 void P2PClient::SetLocalId(const std::string& local_id) {
   local_id_ = local_id;
 }
+const char *P2PClient::GetLocalId() const
+{
+  return local_id_.c_str();
+}
 void P2PClient::OnSignalingMessage(const std::string& message,
                                    const std::string& remote_id) {
   // First to check whether remote_id is in the allowed_remote_ids_ list.
