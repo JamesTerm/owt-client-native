@@ -579,13 +579,28 @@ void P2PPeerConnectionChannel::OnAddStream(
   Json::Value stream_tracks;
   {
     rtc::CritScope cs(&remote_track_source_info_crit_);
-    for (const auto& track : stream->GetAudioTracks()) {
-      stream_tracks.append(track->id());
+    //Case 108782: Use remote_track_source_info_ for the track id's as safari will have a diffenent
+    //set of ID's for the chat-signal which is the ID's pulled by default, we'll keep this logic intact
+    //if for some reason we do not have the correct size.  Note: this may be problematic for future if there
+    //are more than 2 streams
+    if (remote_track_source_info_.size()<2)
+    {
+      for (const auto& track : stream->GetAudioTracks()) {
+        stream_tracks.append(track->id()); RTC_LOG(LS_INFO) << "JDK track idA " << track->id();
+      }
+      for (const auto& track : stream->GetVideoTracks()) {
+        stream_tracks.append(track->id());  RTC_LOG(LS_INFO) << "JDK track idV " << track->id();
+      }
     }
-    for (const auto& track : stream->GetVideoTracks()) {
-      stream_tracks.append(track->id());
+    else
+    {
+      for (const auto& track : remote_track_source_info_ )
+      {
+        stream_tracks.append(track.first.c_str());
+        RTC_LOG(LS_INFO) << "JDK chat-track id " << track.first.c_str();
+      }
     }
-  }
+   }
   std::shared_ptr<RemoteStream> remote_stream(
       new RemoteStream(stream, remote_id_));
   EventTrigger::OnEvent1<P2PPeerConnectionChannelObserver*,
@@ -600,7 +615,7 @@ void P2PPeerConnectionChannel::OnAddStream(
   Json::Value json_tracks;
   json_tracks[kMessageTypeKey] = kChatTracksAdded;
   json_tracks[kMessageDataKey] = stream_tracks;
-  SendSignalingMessage(json_tracks);
+  SendSignalingMessage(json_tracks);  RTC_LOG(LS_INFO) << "JDK kChatTracksAdded message sent";
 }
 void P2PPeerConnectionChannel::OnRemoveStream(
     rtc::scoped_refptr<MediaStreamInterface> stream) {
@@ -645,7 +660,7 @@ void P2PPeerConnectionChannel::OnIceConnectionChange(
   RTC_LOG(LS_INFO) << "Ice connection state changed: " << new_state;
   switch (new_state) {
     case webrtc::PeerConnectionInterface::kIceConnectionConnected:
-    case webrtc::PeerConnectionInterface::kIceConnectionCompleted:
+    case webrtc::PeerConnectionInterface::kIceConnectionCompleted:   RTC_LOG(LS_INFO) << "JDK Ice connected/completed";
       ChangeSessionState(kSessionStateConnected);
       CheckWaitedList();
       // reset |last_disconnect_|.
